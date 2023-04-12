@@ -34,7 +34,7 @@ To run locally in docker container:
 docker run -dit --name my-apache-app -p 8080:80 -v "$PWD":/usr/local/apache2/htdocs/  httpd
 ```
 
-or ith php
+or with php
 
 ```
 docker run -dit --name my-apache-app -p 8080:80 -v "$PWD":/var/www/html php:7.2-apache
@@ -43,4 +43,4 @@ docker run -dit --name my-apache-app -p 8080:80 -v "$PWD":/var/www/html php:7.2-
 
 ## Credits
 
-base algorithm as taken from [wikipedia.org/Tower_of_Hanoi](https://en.wikipedia.org/wiki/Tower_of_Hanoi)
+Base of the algorithm was taken from [wikipedia.org/Tower_of_Hanoi](https://en.wikipedia.org/wiki/Tower_of_Hanoi)
