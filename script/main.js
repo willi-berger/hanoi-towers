@@ -68,28 +68,13 @@ const TowersOfHanoi = function (canvas) {
     }
  
 
-    var timeStep = 50; // In milliseconds
+    var timeStep = 500; // In milliseconds
     const cw = ctx.canvas.width;
     const ch = ctx.canvas.height;
     var cmTID;
 
-    function updateAll() {
-        ctx.clearRect(0, 0, cw, ch);
-        for (var i = 0; i < boxes.length; i = i + 1) {
-            boxes[i].update();
-        }
-        
-        tile.update();
-        clearTimeout(cmTID);
-        cmTID = setTimeout(updateAll, timeStep);
-    }
 
-
-    // Create the boxes
-    var boxes = [];
-
-
-    // we want (0,0) to be in the lower left corner and y coords from bottom to up
+      // we want (0,0) to be in the lower left corner and y coords from bottom to up
     ctx.translate(0, ch)
     ctx.scale(1 , -1);
 
@@ -100,18 +85,18 @@ const TowersOfHanoi = function (canvas) {
     let t3x = cw * 5 / 6;
     // tiles: measures and definitions
     const tower_height = 300;
-    const n_tiles = 10;
-    const tile_height = tower_height / n_tiles ;
+    const N_TILES = 10;
+    const tile_height = tower_height / N_TILES ;
     let max_tile_width = cw / 3 - 5;
     let min_tile_width = 20;
-    let delta_tile_width = (max_tile_width - min_tile_width) / n_tiles;
+    let delta_tile_width = (max_tile_width - min_tile_width) / N_TILES;
 
     function initializeTowers() {
         var towers = [];
         towers.push(new Tower(t1x, tower_height));
         towers.push(new Tower(t2x, tower_height));
         towers.push(new Tower(t3x, tower_height));
-        for (let i = 0; i < n_tiles; i++) {
+        for (let i = 0; i < N_TILES; i++) {
             // tile.x and y will be calculated in tower.pushTile()
             let tile = new Tile(0, 0, max_tile_width - i * delta_tile_width, tile_height);
             towers[0].pushTile(tile)
@@ -121,61 +106,71 @@ const TowersOfHanoi = function (canvas) {
     }
 
 
-    var towers = initializeTowers();
-
-    
-    // Do the first update
-    // updateAll();
+    this.towers = initializeTowers();
     
     this.stroke = function() {
-        
-        towers.forEach(t => t.stroke());
+        ctx.clearRect(0, 0, cw, ch);
+        this.towers.forEach(t => t.stroke());
     }
 
-
-    /**
-     * 
-     * @param {number} a 
-     * @param {number} b 
-     */
-    this.moveTile = function(a, b) {
-        console.log(`moveTile(${a}, ${b})`)
-        let t = towers[a].popTile()
-        towers[b].pushTile(t)
-    }
 
     /**
      * move tower from position a to position b
      * 
-     * @param {number} a 
-     * @param {number} b 
+     * @param {number} n
+     * @param {Tower} source 
+     * @param {Tower} target 
+     * @param {Tower} auxililiary 
      */
-    this.moveTower = function(a, b) {
-        console.log(`moveTower(${a}, ${b})`)
-        let c = [0, 1, 2].filter(item => ![a, b].includes(item)).at(0);
+    this.moveTower = function* (n, source, target, auxiliary) {
+        console.log(`moveTower(${n}, ${source}, ${target}, ${auxiliary})`)
 
-        if (towers[a].numTiles() == 0) {
-            return;
+        if (n > 0) {
+            // Move n - 1 disks from source to auxiliary, so they are out of the way
+            yield * this.moveTower(n - 1, source, auxiliary, target)
+    
+            // Move the nth disk from source to target
+            console.log(`moveTile(${source}, ${target})`)
+            let t = source.popTile()
+            target.pushTile(t);
+
+            // signal one iteration step
+            yield target;
+    
+            // Move the n - 1 disks that we left on auxiliary onto target
+            yield * this.moveTower(n - 1, auxiliary, target, source)
         }
-
-        this.moveTile(a, c);
-        
-        this.moveTower(a, b);
-
-        this.moveTile(c, b);
     } 
 
-    this.startMovingTowers = function() {
-        this.moveTower(0, 2);
+
+    this.runAndStrokeMoveTowersSequence = function(self, generator) {
+        console.log('updateAll')
+        ctx.clearRect(0, 0, cw, ch);
+        self.stroke();
+
+        let res = generator.next();
+        console.log(res)
+        if (!res.done) {        
+            console.log('setTimeout')
+            clearTimeout(cmTID);
+            cmTID = setTimeout(self.runAndStrokeMoveTowersSequence, timeStep, self, generator);
+        }
     }
 
-}
+    this.start = function() {
+        console.log('--- START ---');
+        this.stroke()
+
+        const generator = this.moveTower(N_TILES, this.towers[0], this.towers[2], this.towers[1])
+        this.runAndStrokeMoveTowersSequence(this, generator)
+    }
+ }
 
 
 $(document).ready(function () {
     var canvas = $("#canvas")[0]
-    towers = new TowersOfHanoi(canvas);
+    /** @type {TowersOfHanoi} **/
+    var towers = new TowersOfHanoi(canvas);
 
-    towers.stroke();
-    towers.startMovingTowers();
+    towers.start();
 })
