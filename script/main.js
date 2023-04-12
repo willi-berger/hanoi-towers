@@ -144,12 +144,9 @@ const TowersOfHanoi = function (canvas) {
             // Move n - 1 disks from source to auxiliary, so they are out of the way
             yield * this.moveTower(n - 1, source, auxiliary, target)
     
-            // Move the nth disk from source to target
+            // Move the nth disk from source to target and signal one iteration step
             console.log(`moveTile(${source.name}, ${target.name})`)
-            let t = source.popTile()
-            target.pushTile(t);
-
-            // signal one iteration step
+            target.pushTile(source.popTile());
             yield target;
     
             // Move the n - 1 disks that we left on auxiliary onto target
