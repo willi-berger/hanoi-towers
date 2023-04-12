@@ -156,22 +156,21 @@ const TowersOfHanoi = function (canvas) {
 
 
     this.runAndStrokeMoveTowersSequence = function(self, generator) {
-        console.log('updateAll')
         ctx.clearRect(0, 0, cw, ch);
         self.stroke();
 
         let res = generator.next();
-        console.log(res)
         if (!res.done) {        
             clearTimeout(cmTID);
             cmTID = setTimeout(self.runAndStrokeMoveTowersSequence, timeStep, self, generator);
+        } else {
+            console.log('--- FINISH ---');
         }
     }
 
     this.start = function() {
         console.log('--- START ---');
         this.stroke()
-
         const generator = this.moveTower(N_TILES, this.towers[0], this.towers[2], this.towers[1])
         this.runAndStrokeMoveTowersSequence(this, generator)
     }
